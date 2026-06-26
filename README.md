@@ -8,6 +8,8 @@ L’obiettivo del progetto è simulare una piattaforma digitale per la condivisi
 
 Il progetto non rappresenta un’applicazione commerciale completa, ma una struttura tecnica dimostrativa utile a descrivere il funzionamento di una piattaforma web basata su frontend, backend, database e API REST.
 
+---
+
 ## Funzionalità principali
 
 Il prototipo prevede le seguenti funzionalità:
@@ -20,15 +22,24 @@ Il prototipo prevede le seguenti funzionalità:
 - gestione dello stato delle richieste;
 - struttura dati relazionale per utenti, libri, richieste, feedback e segnalazioni.
 
+---
+
 ## Architettura del sistema
 
 Il progetto è organizzato secondo un’architettura client-server suddivisa in tre livelli principali:
 
-1. **Frontend**: rappresenta l’interfaccia utente e consente di interagire con il sistema tramite una pagina HTML.
-2. **Backend**: gestisce la logica applicativa attraverso API REST realizzate con Node.js ed Express.
-3. **Database**: definisce lo schema relazionale per l’archiviazione strutturata delle informazioni.
+1. **Frontend**  
+   Rappresenta l’interfaccia utente e consente di interagire con il sistema tramite una pagina HTML.
+
+2. **Backend**  
+   Gestisce la logica applicativa attraverso API REST realizzate con Node.js ed Express.
+
+3. **Database**  
+   Definisce lo schema relazionale per l’archiviazione strutturata delle informazioni.
 
 La comunicazione tra frontend e backend avviene tramite richieste HTTP e scambio di dati in formato JSON.
+
+---
 
 ## Struttura del repository
 
@@ -45,8 +56,11 @@ book-sharing-geolocation-app/
 ├── database/
 │   └── schema.sql
 │
+├── .env.example
 └── README.md
 ```
+
+---
 
 ## Tecnologie utilizzate
 
@@ -61,13 +75,15 @@ book-sharing-geolocation-app/
 - Database relazionale
 - Architettura client-server
 
+---
+
 ## Backend
 
 Il backend è realizzato con Node.js ed Express.js.
 
 Espone diversi endpoint API per la gestione delle funzionalità principali della piattaforma.
 
-Endpoint principali:
+### Endpoint principali
 
 - `GET /api/users`: restituisce l’elenco degli utenti registrati.
 - `POST /api/users`: registra un nuovo utente.
@@ -76,6 +92,86 @@ Endpoint principali:
 - `POST /api/loan-requests`: crea una nuova richiesta di prestito o scambio.
 - `GET /api/loan-requests`: restituisce l’elenco delle richieste di prestito.
 - `PUT /api/loan-requests/:id/status`: aggiorna lo stato di una richiesta.
+
+---
+
+## Esempi di richieste API
+
+Di seguito sono riportati alcuni esempi di richieste che possono essere inviate al backend.
+
+### Registrazione di un utente
+
+```http
+POST /api/users
+Content-Type: application/json
+```
+
+```json
+{
+  "name": "Anna Rossi",
+  "email": "anna.rossi@email.it",
+  "city": "Napoli"
+}
+```
+
+### Inserimento di un libro
+
+```http
+POST /api/books
+Content-Type: application/json
+```
+
+```json
+{
+  "title": "Il nome della rosa",
+  "author": "Umberto Eco",
+  "category": "Narrativa",
+  "city": "Napoli",
+  "ownerId": 1
+}
+```
+
+### Ricerca dei libri per città
+
+```http
+GET /api/books?city=Napoli
+```
+
+### Ricerca dei libri per titolo o autore
+
+```http
+GET /api/books?search=Eco
+```
+
+### Creazione di una richiesta di prestito
+
+```http
+POST /api/loan-requests
+Content-Type: application/json
+```
+
+```json
+{
+  "bookId": 1,
+  "requesterId": 2,
+  "message": "Vorrei prendere in prestito questo libro per due settimane."
+}
+```
+
+### Aggiornamento dello stato di una richiesta
+
+```http
+PUT /api/loan-requests/1/status
+Content-Type: application/json
+```
+
+```json
+{
+  "status": "accepted"
+}
+```
+
+---
 
 ## Frontend
 
@@ -90,6 +186,8 @@ Il frontend è costituito da una pagina HTML dimostrativa che consente di:
 
 La pagina comunica con il backend tramite chiamate `fetch()` e riceve risposte in formato JSON.
 
+---
+
 ## Database
 
 Il file `database/schema.sql` contiene lo schema relazionale del sistema.
@@ -103,6 +201,24 @@ Sono previste le seguenti tabelle:
 - `reports`: eventuali segnalazioni.
 
 Lo schema include chiavi primarie, chiavi esterne, vincoli e dati dimostrativi.
+
+---
+
+## Configurazione del progetto
+
+Il file `.env.example` contiene un esempio di configurazione del progetto.
+
+In una eventuale implementazione reale, tale file potrebbe essere copiato in un file `.env` e utilizzato per configurare porta del server, URL del backend, collegamento al database e chiavi API esterne.
+
+Esempio:
+
+```env
+PORT=3000
+API_BASE_URL=http://localhost:3000/api
+NODE_ENV=development
+```
+
+---
 
 ## Avvio del backend
 
@@ -132,6 +248,8 @@ Il server sarà disponibile all’indirizzo:
 http://localhost:3000
 ```
 
+---
+
 ## Avvio del frontend
 
 Aprire il file:
@@ -148,6 +266,8 @@ http://localhost:3000/api
 
 Per un corretto funzionamento è necessario che il backend sia già avviato.
 
+---
+
 ## Esempio di flusso operativo
 
 1. L’utente si registra inserendo nome, email e città.
@@ -156,6 +276,20 @@ Per un corretto funzionamento è necessario che il backend sia già avviato.
 4. Il sistema restituisce i libri filtrati in base ai parametri indicati.
 5. L’utente invia una richiesta di prestito o scambio.
 6. Il backend registra la richiesta e ne gestisce lo stato.
+
+---
+
+## Stato del prototipo
+
+Il progetto è stato realizzato come prototipo dimostrativo e non come applicazione commerciale completa.
+
+Il backend utilizza dati simulati in memoria per mostrare il funzionamento delle API REST e il flusso di comunicazione tra client e server. Questa scelta consente di rendere il codice più semplice da leggere e più adatto a una finalità didattica.
+
+Il file `database/schema.sql` rappresenta invece la progettazione relazionale prevista per una possibile implementazione reale del sistema. In una versione completa dell’applicazione, il backend potrebbe essere collegato a un database relazionale, come MySQL o PostgreSQL, utilizzando lo schema SQL definito nel repository.
+
+Questa impostazione permette di distinguere tra il prototipo funzionante, utile a simulare le principali operazioni dell’applicazione, e la progettazione tecnica necessaria per un futuro sviluppo completo.
+
+---
 
 ## Aspetti di sicurezza e privacy
 
@@ -167,9 +301,13 @@ Il progetto considera alcuni principi fondamentali di sicurezza informatica e pr
 - separazione tra frontend, backend e database;
 - possibilità di utilizzo del protocollo HTTPS in un’implementazione reale.
 
+---
+
 ## Limiti del prototipo
 
 Il progetto ha finalità dimostrative. Alcuni aspetti, come autenticazione reale, geolocalizzazione tramite API esterne, persistenza completa dei dati e deploy cloud, sono descritti a livello progettuale e possono rappresentare sviluppi futuri.
+
+---
 
 ## Sviluppi futuri
 
@@ -182,6 +320,8 @@ In una versione completa dell’applicazione potrebbero essere implementati:
 - sistema di rating tra utenti;
 - pannello di amministrazione;
 - deploy su infrastruttura cloud.
+
+---
 
 ## Autore
 
