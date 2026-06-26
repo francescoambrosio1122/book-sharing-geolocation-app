@@ -1,30 +1,397 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-  <title>Book Sharing App</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Book Sharing Geolocation App</title>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f6f8;
+      color: #222;
+    }
+
+    header {
+      background-color: #1f4e79;
+      color: white;
+      padding: 25px;
+      text-align: center;
+    }
+
+    main {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    section {
+      background: white;
+      margin-bottom: 25px;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+
+    h1, h2 {
+      margin-top: 0;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 12px;
+    }
+
+    input, select, textarea, button {
+      padding: 10px;
+      font-size: 15px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    textarea {
+      min-height: 80px;
+      resize: vertical;
+    }
+
+    button {
+      background-color: #1f4e79;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #163957;
+    }
+
+    .book-card, .request-card, .user-card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 10px;
+      background-color: #fafafa;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background-color: #e8f0fe;
+      color: #1f4e79;
+      border-radius: 20px;
+      font-size: 13px;
+      margin-top: 5px;
+    }
+
+    .success {
+      color: #0b7a28;
+      font-weight: bold;
+    }
+
+    .error {
+      color: #b00020;
+      font-weight: bold;
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: #666;
+      font-size: 14px;
+    }
+  </style>
 </head>
+
 <body>
+  <header>
+    <h1>Book Sharing Geolocation App</h1>
+    <p>Piattaforma dimostrativa per la condivisione geolocalizzata del patrimonio librario privato</p>
+  </header>
 
-<h1>Condivisione Libri</h1>
+  <main>
+    <section>
+      <h2>Registrazione utente</h2>
+      <div class="grid">
+        <input type="text" id="userName" placeholder="Nome e cognome">
+        <input type="email" id="userEmail" placeholder="Email">
+        <input type="text" id="userCity" placeholder="Città">
+      </div>
+      <br>
+      <button onclick="registerUser()">Registra utente</button>
+      <p id="userMessage"></p>
+    </section>
 
-<input type="text" id="title" placeholder="Titolo libro">
-<button onclick="addBook()">Aggiungi libro</button>
+    <section>
+      <h2>Inserimento libro</h2>
+      <div class="grid">
+        <input type="text" id="bookTitle" placeholder="Titolo del libro">
+        <input type="text" id="bookAuthor" placeholder="Autore">
+        <input type="text" id="bookCategory" placeholder="Categoria">
+        <input type="text" id="bookCity" placeholder="Città">
+        <select id="bookOwner"></select>
+      </div>
+      <br>
+      <button onclick="addBook()">Aggiungi libro</button>
+      <p id="bookMessage"></p>
+    </section>
 
-<script>
-function addBook() {
-  const title = document.getElementById("title").value;
+    <section>
+      <h2>Ricerca libri disponibili</h2>
+      <div class="grid">
+        <input type="text" id="searchText" placeholder="Cerca per titolo o autore">
+        <input type="text" id="searchCity" placeholder="Filtra per città">
+      </div>
+      <br>
+      <button onclick="loadBooks()">Cerca libri</button>
+      <div id="booksList"></div>
+    </section>
 
-  fetch("http://localhost:3000/books", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify({ title })
-  })
-  .then(res => res.json())
-  .then(data => console.log(data));
-}
-</script>
+    <section>
+      <h2>Richiesta di prestito o scambio</h2>
+      <div class="grid">
+        <select id="loanBook"></select>
+        <select id="loanRequester"></select>
+      </div>
+      <br>
+      <textarea id="loanMessage" placeholder="Messaggio per il proprietario del libro"></textarea>
+      <br><br>
+      <button onclick="createLoanRequest()">Invia richiesta</button>
+      <p id="loanMessageResult"></p>
+    </section>
 
+    <section>
+      <h2>Richieste di prestito</h2>
+      <button onclick="loadLoanRequests()">Aggiorna richieste</button>
+      <div id="requestsList"></div>
+    </section>
+
+    <section>
+      <h2>Utenti registrati</h2>
+      <div id="usersList"></div>
+    </section>
+  </main>
+
+  <footer>
+    Project Work - Informatica per le Aziende Digitali L-31
+  </footer>
+
+  <script>
+    const API_BASE_URL = "http://localhost:3000/api";
+
+    async function loadUsers() {
+      const response = await fetch(`${API_BASE_URL}/users`);
+      const users = await response.json();
+
+      const ownerSelect = document.getElementById("bookOwner");
+      const requesterSelect = document.getElementById("loanRequester");
+      const usersList = document.getElementById("usersList");
+
+      ownerSelect.innerHTML = '<option value="">Seleziona proprietario</option>';
+      requesterSelect.innerHTML = '<option value="">Seleziona richiedente</option>';
+      usersList.innerHTML = "";
+
+      users.forEach(user => {
+        ownerSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.city}</option>`;
+        requesterSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.city}</option>`;
+
+        usersList.innerHTML += `
+          <div class="user-card">
+            <strong>${user.name}</strong><br>
+            Email: ${user.email}<br>
+            Città: ${user.city}
+          </div>
+        `;
+      });
+    }
+
+    async function registerUser() {
+      const name = document.getElementById("userName").value;
+      const email = document.getElementById("userEmail").value;
+      const city = document.getElementById("userCity").value;
+      const message = document.getElementById("userMessage");
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/users`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ name, email, city })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          message.innerHTML = `<span class="error">${result.error}</span>`;
+          return;
+        }
+
+        message.innerHTML = `<span class="success">${result.message}</span>`;
+
+        document.getElementById("userName").value = "";
+        document.getElementById("userEmail").value = "";
+        document.getElementById("userCity").value = "";
+
+        loadUsers();
+      } catch (error) {
+        message.innerHTML = `<span class="error">Errore di connessione al backend</span>`;
+      }
+    }
+
+    async function loadBooks() {
+      const search = document.getElementById("searchText").value;
+      const city = document.getElementById("searchCity").value;
+
+      let url = `${API_BASE_URL}/books?`;
+
+      if (search) {
+        url += `search=${encodeURIComponent(search)}&`;
+      }
+
+      if (city) {
+        url += `city=${encodeURIComponent(city)}`;
+      }
+
+      const response = await fetch(url);
+      const books = await response.json();
+
+      const booksList = document.getElementById("booksList");
+      const loanBookSelect = document.getElementById("loanBook");
+
+      booksList.innerHTML = "";
+      loanBookSelect.innerHTML = '<option value="">Seleziona libro</option>';
+
+      if (books.length === 0) {
+        booksList.innerHTML = "<p>Nessun libro trovato.</p>";
+        return;
+      }
+
+      books.forEach(book => {
+        booksList.innerHTML += `
+          <div class="book-card">
+            <strong>${book.title}</strong><br>
+            Autore: ${book.author}<br>
+            Categoria: ${book.category}<br>
+            Città: ${book.city}<br>
+            <span class="badge">${book.available ? "Disponibile" : "Non disponibile"}</span>
+          </div>
+        `;
+
+        if (book.available) {
+          loanBookSelect.innerHTML += `<option value="${book.id}">${book.title} - ${book.city}</option>`;
+        }
+      });
+    }
+
+    async function addBook() {
+      const title = document.getElementById("bookTitle").value;
+      const author = document.getElementById("bookAuthor").value;
+      const category = document.getElementById("bookCategory").value;
+      const city = document.getElementById("bookCity").value;
+      const ownerId = document.getElementById("bookOwner").value;
+      const message = document.getElementById("bookMessage");
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/books`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ title, author, category, city, ownerId })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          message.innerHTML = `<span class="error">${result.error}</span>`;
+          return;
+        }
+
+        message.innerHTML = `<span class="success">${result.message}</span>`;
+
+        document.getElementById("bookTitle").value = "";
+        document.getElementById("bookAuthor").value = "";
+        document.getElementById("bookCategory").value = "";
+        document.getElementById("bookCity").value = "";
+        document.getElementById("bookOwner").value = "";
+
+        loadBooks();
+      } catch (error) {
+        message.innerHTML = `<span class="error">Errore di connessione al backend</span>`;
+      }
+    }
+
+    async function createLoanRequest() {
+      const bookId = document.getElementById("loanBook").value;
+      const requesterId = document.getElementById("loanRequester").value;
+      const messageText = document.getElementById("loanMessage").value;
+      const resultMessage = document.getElementById("loanMessageResult");
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/loan-requests`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            bookId,
+            requesterId,
+            message: messageText
+          })
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+          resultMessage.innerHTML = `<span class="error">${result.error}</span>`;
+          return;
+        }
+
+        resultMessage.innerHTML = `<span class="success">${result.message}</span>`;
+        document.getElementById("loanMessage").value = "";
+
+        loadLoanRequests();
+      } catch (error) {
+        resultMessage.innerHTML = `<span class="error">Errore di connessione al backend</span>`;
+      }
+    }
+
+    async function loadLoanRequests() {
+      const response = await fetch(`${API_BASE_URL}/loan-requests`);
+      const requests = await response.json();
+
+      const requestsList = document.getElementById("requestsList");
+      requestsList.innerHTML = "";
+
+      if (requests.length === 0) {
+        requestsList.innerHTML = "<p>Nessuna richiesta presente.</p>";
+        return;
+      }
+
+      requests.forEach(request => {
+        requestsList.innerHTML += `
+          <div class="request-card">
+            <strong>Richiesta n. ${request.id}</strong><br>
+            ID Libro: ${request.bookId}<br>
+            ID Richiedente: ${request.requesterId}<br>
+            Messaggio: ${request.message || "Nessun messaggio"}<br>
+            Stato: <span class="badge">${request.status}</span><br>
+            Data: ${new Date(request.createdAt).toLocaleString("it-IT")}
+          </div>
+        `;
+      });
+    }
+
+    window.onload = function() {
+      loadUsers();
+      loadBooks();
+      loadLoanRequests();
+    };
+  </script>
 </body>
 </html>
