@@ -70,7 +70,9 @@
       background-color: #163957;
     }
 
-    .book-card, .request-card, .user-card {
+    .book-card,
+    .request-card,
+    .user-card {
       border: 1px solid #ddd;
       border-radius: 8px;
       padding: 12px;
@@ -116,11 +118,13 @@
   <main>
     <section>
       <h2>Registrazione utente</h2>
+
       <div class="grid">
         <input type="text" id="userName" placeholder="Nome e cognome">
         <input type="email" id="userEmail" placeholder="Email">
         <input type="text" id="userCity" placeholder="Città">
       </div>
+
       <br>
       <button onclick="registerUser()">Registra utente</button>
       <p id="userMessage"></p>
@@ -128,13 +132,17 @@
 
     <section>
       <h2>Inserimento libro</h2>
+
       <div class="grid">
         <input type="text" id="bookTitle" placeholder="Titolo del libro">
         <input type="text" id="bookAuthor" placeholder="Autore">
         <input type="text" id="bookCategory" placeholder="Categoria">
         <input type="text" id="bookCity" placeholder="Città">
-        <select id="bookOwner"></select>
+        <select id="bookOwner">
+          <option value="">Seleziona proprietario</option>
+        </select>
       </div>
+
       <br>
       <button onclick="addBook()">Aggiungi libro</button>
       <p id="bookMessage"></p>
@@ -142,10 +150,12 @@
 
     <section>
       <h2>Ricerca libri disponibili</h2>
+
       <div class="grid">
         <input type="text" id="searchText" placeholder="Cerca per titolo o autore">
         <input type="text" id="searchCity" placeholder="Filtra per città">
       </div>
+
       <br>
       <button onclick="loadBooks()">Cerca libri</button>
       <div id="booksList"></div>
@@ -153,12 +163,20 @@
 
     <section>
       <h2>Richiesta di prestito o scambio</h2>
+
       <div class="grid">
-        <select id="loanBook"></select>
-        <select id="loanRequester"></select>
+        <select id="loanBook">
+          <option value="">Seleziona libro</option>
+        </select>
+
+        <select id="loanRequester">
+          <option value="">Seleziona richiedente</option>
+        </select>
       </div>
+
       <br>
       <textarea id="loanMessage" placeholder="Messaggio per il proprietario del libro"></textarea>
+
       <br><br>
       <button onclick="createLoanRequest()">Invia richiesta</button>
       <p id="loanMessageResult"></p>
@@ -184,29 +202,34 @@
     const API_BASE_URL = "http://localhost:3000/api";
 
     async function loadUsers() {
-      const response = await fetch(`${API_BASE_URL}/users`);
-      const users = await response.json();
+      try {
+        const response = await fetch(`${API_BASE_URL}/users`);
+        const users = await response.json();
 
-      const ownerSelect = document.getElementById("bookOwner");
-      const requesterSelect = document.getElementById("loanRequester");
-      const usersList = document.getElementById("usersList");
+        const ownerSelect = document.getElementById("bookOwner");
+        const requesterSelect = document.getElementById("loanRequester");
+        const usersList = document.getElementById("usersList");
 
-      ownerSelect.innerHTML = '<option value="">Seleziona proprietario</option>';
-      requesterSelect.innerHTML = '<option value="">Seleziona richiedente</option>';
-      usersList.innerHTML = "";
+        ownerSelect.innerHTML = '<option value="">Seleziona proprietario</option>';
+        requesterSelect.innerHTML = '<option value="">Seleziona richiedente</option>';
+        usersList.innerHTML = "";
 
-      users.forEach(user => {
-        ownerSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.city}</option>`;
-        requesterSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.city}</option>`;
+        users.forEach(user => {
+          ownerSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.city}</option>`;
+          requesterSelect.innerHTML += `<option value="${user.id}">${user.name} - ${user.city}</option>`;
 
-        usersList.innerHTML += `
-          <div class="user-card">
-            <strong>${user.name}</strong><br>
-            Email: ${user.email}<br>
-            Città: ${user.city}
-          </div>
-        `;
-      });
+          usersList.innerHTML += `
+            <div class="user-card">
+              <strong>${user.name}</strong><br>
+              Email: ${user.email}<br>
+              Città: ${user.city}
+            </div>
+          `;
+        });
+      } catch (error) {
+        document.getElementById("usersList").innerHTML =
+          '<p class="error">Impossibile caricare gli utenti. Verificare che il backend sia avviato.</p>';
+      }
     }
 
     async function registerUser() {
@@ -239,53 +262,58 @@
 
         loadUsers();
       } catch (error) {
-        message.innerHTML = `<span class="error">Errore di connessione al backend</span>`;
+        message.innerHTML = '<span class="error">Errore di connessione al backend.</span>';
       }
     }
 
     async function loadBooks() {
-      const search = document.getElementById("searchText").value;
-      const city = document.getElementById("searchCity").value;
+      try {
+        const search = document.getElementById("searchText").value;
+        const city = document.getElementById("searchCity").value;
 
-      let url = `${API_BASE_URL}/books?`;
+        let url = `${API_BASE_URL}/books?`;
 
-      if (search) {
-        url += `search=${encodeURIComponent(search)}&`;
-      }
-
-      if (city) {
-        url += `city=${encodeURIComponent(city)}`;
-      }
-
-      const response = await fetch(url);
-      const books = await response.json();
-
-      const booksList = document.getElementById("booksList");
-      const loanBookSelect = document.getElementById("loanBook");
-
-      booksList.innerHTML = "";
-      loanBookSelect.innerHTML = '<option value="">Seleziona libro</option>';
-
-      if (books.length === 0) {
-        booksList.innerHTML = "<p>Nessun libro trovato.</p>";
-        return;
-      }
-
-      books.forEach(book => {
-        booksList.innerHTML += `
-          <div class="book-card">
-            <strong>${book.title}</strong><br>
-            Autore: ${book.author}<br>
-            Categoria: ${book.category}<br>
-            Città: ${book.city}<br>
-            <span class="badge">${book.available ? "Disponibile" : "Non disponibile"}</span>
-          </div>
-        `;
-
-        if (book.available) {
-          loanBookSelect.innerHTML += `<option value="${book.id}">${book.title} - ${book.city}</option>`;
+        if (search) {
+          url += `search=${encodeURIComponent(search)}&`;
         }
-      });
+
+        if (city) {
+          url += `city=${encodeURIComponent(city)}`;
+        }
+
+        const response = await fetch(url);
+        const books = await response.json();
+
+        const booksList = document.getElementById("booksList");
+        const loanBookSelect = document.getElementById("loanBook");
+
+        booksList.innerHTML = "";
+        loanBookSelect.innerHTML = '<option value="">Seleziona libro</option>';
+
+        if (books.length === 0) {
+          booksList.innerHTML = "<p>Nessun libro trovato.</p>";
+          return;
+        }
+
+        books.forEach(book => {
+          booksList.innerHTML += `
+            <div class="book-card">
+              <strong>${book.title}</strong><br>
+              Autore: ${book.author}<br>
+              Categoria: ${book.category}<br>
+              Città: ${book.city}<br>
+              <span class="badge">${book.available ? "Disponibile" : "Non disponibile"}</span>
+            </div>
+          `;
+
+          if (book.available) {
+            loanBookSelect.innerHTML += `<option value="${book.id}">${book.title} - ${book.city}</option>`;
+          }
+        });
+      } catch (error) {
+        document.getElementById("booksList").innerHTML =
+          '<p class="error">Impossibile caricare i libri. Verificare che il backend sia avviato.</p>';
+      }
     }
 
     async function addBook() {
@@ -322,7 +350,7 @@
 
         loadBooks();
       } catch (error) {
-        message.innerHTML = `<span class="error">Errore di connessione al backend</span>`;
+        message.innerHTML = '<span class="error">Errore di connessione al backend.</span>';
       }
     }
 
@@ -357,34 +385,39 @@
 
         loadLoanRequests();
       } catch (error) {
-        resultMessage.innerHTML = `<span class="error">Errore di connessione al backend</span>`;
+        resultMessage.innerHTML = '<span class="error">Errore di connessione al backend.</span>';
       }
     }
 
     async function loadLoanRequests() {
-      const response = await fetch(`${API_BASE_URL}/loan-requests`);
-      const requests = await response.json();
+      try {
+        const response = await fetch(`${API_BASE_URL}/loan-requests`);
+        const requests = await response.json();
 
-      const requestsList = document.getElementById("requestsList");
-      requestsList.innerHTML = "";
+        const requestsList = document.getElementById("requestsList");
+        requestsList.innerHTML = "";
 
-      if (requests.length === 0) {
-        requestsList.innerHTML = "<p>Nessuna richiesta presente.</p>";
-        return;
+        if (requests.length === 0) {
+          requestsList.innerHTML = "<p>Nessuna richiesta presente.</p>";
+          return;
+        }
+
+        requests.forEach(request => {
+          requestsList.innerHTML += `
+            <div class="request-card">
+              <strong>Richiesta n. ${request.id}</strong><br>
+              ID Libro: ${request.bookId}<br>
+              ID Richiedente: ${request.requesterId}<br>
+              Messaggio: ${request.message || "Nessun messaggio"}<br>
+              Stato: <span class="badge">${request.status}</span><br>
+              Data: ${new Date(request.createdAt).toLocaleString("it-IT")}
+            </div>
+          `;
+        });
+      } catch (error) {
+        document.getElementById("requestsList").innerHTML =
+          '<p class="error">Impossibile caricare le richieste. Verificare che il backend sia avviato.</p>';
       }
-
-      requests.forEach(request => {
-        requestsList.innerHTML += `
-          <div class="request-card">
-            <strong>Richiesta n. ${request.id}</strong><br>
-            ID Libro: ${request.bookId}<br>
-            ID Richiedente: ${request.requesterId}<br>
-            Messaggio: ${request.message || "Nessun messaggio"}<br>
-            Stato: <span class="badge">${request.status}</span><br>
-            Data: ${new Date(request.createdAt).toLocaleString("it-IT")}
-          </div>
-        `;
-      });
     }
 
     window.onload = function() {
